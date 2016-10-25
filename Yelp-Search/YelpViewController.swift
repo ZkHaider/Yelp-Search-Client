@@ -45,8 +45,6 @@ class YelpViewController: UIViewController, UITableViewDelegate, UITableViewData
         // Add tableview delegates
         yelpTableView.delegate = self
         yelpTableView.dataSource = self
-//        yelpTableView.estimatedRowHeight = 146
-//        yelpTableView.rowHeight = UITableViewAutomaticDimension
         
         KRProgressHUD.show(message: "Loading businesses...")
         
@@ -56,14 +54,12 @@ class YelpViewController: UIViewController, UITableViewDelegate, UITableViewData
             self.yelpTableView.reloadData()
             
             KRProgressHUD.dismiss()
-        }
-        )
+        })
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        
-        self.yelpTableView.layoutIfNeeded()
+
     }
 
     override func didReceiveMemoryWarning() {
@@ -124,11 +120,20 @@ class YelpViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
+        KRProgressHUD.show(message: "Loading businesses...")
+    
+        // TODO... search API
+        Business.searchWithTerm(term: searchBar.text!, completion: { (businesses: [Business]?, error: Error?) -> Void in
+            
+            self.businesses = businesses
+            self.yelpTableView.reloadData()
+            
+            KRProgressHUD.dismiss()
+        })
+        
         // Clear search
         self.searchBar.text = ""
-        
-        // TODO... search API
-        
+    
         self.searchBar.resignFirstResponder()
         self.searchBar.endEditing(true)
     }
