@@ -12,6 +12,7 @@ class FiltersTableViewController: UITableViewController {
 
     @IBOutlet var filtersTableView: UITableView!
     @IBOutlet weak var dealsSwitch: UISwitch!
+    @IBOutlet weak var sortByChevron: UILabel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,6 +20,8 @@ class FiltersTableViewController: UITableViewController {
         // Check if deals is turned on 
         let dealsOn = UserDefaultsWrapper.getBool(key: "deals", defaultValue: false)
         dealsSwitch.setOn(dealsOn, animated: true)
+        
+        sortByChevron.text = "\u{02C5}"
         
         self.navigationItem.titleView?.tintColor = UIColor.white
         self.navigationItem.title = "Filters"
