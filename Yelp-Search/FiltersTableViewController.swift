@@ -11,9 +11,14 @@ import UIKit
 class FiltersTableViewController: UITableViewController {
 
     @IBOutlet var filtersTableView: UITableView!
+    @IBOutlet weak var dealsSwitch: UISwitch!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Check if deals is turned on 
+        let dealsOn = UserDefaultsWrapper.getBool(key: "deals", defaultValue: false)
+        dealsSwitch.setOn(dealsOn, animated: true)
         
         self.navigationItem.titleView?.tintColor = UIColor.white
         self.navigationItem.title = "Filters"
@@ -54,7 +59,13 @@ class FiltersTableViewController: UITableViewController {
     }
     
     @IBAction func dealSwitchPressed(_ sender: UISwitch) {
-        print("deal switched")
+        
+        let activated = sender.isOn
+        if activated {
+            UserDefaultsWrapper.setBool(key: "deals", value: true)
+        } else {
+            UserDefaultsWrapper.setBool(key: "deals", value: false)
+        }
     }
     
     /*

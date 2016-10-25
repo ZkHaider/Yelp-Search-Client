@@ -249,6 +249,7 @@
                         </connections>
                     </tableView>
                     <connections>
+                        <outlet property="dealsSwitch" destination="PXD-Wi-BGy" id="bhw-8l-W1H"/>
                         <outlet property="filtersTableView" destination="FxJ-Xq-0gS" id="PEn-QB-bsh"/>
                     </connections>
                 </tableViewController>
