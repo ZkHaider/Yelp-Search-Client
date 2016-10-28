@@ -45,6 +45,8 @@ class YelpViewController: UIViewController, UITableViewDelegate, UITableViewData
         // Add tableview delegates
         yelpTableView.delegate = self
         yelpTableView.dataSource = self
+        yelpTableView.estimatedRowHeight = 146
+        yelpTableView.rowHeight = UITableViewAutomaticDimension
         
         KRProgressHUD.show(message: "Loading businesses...")
         

@@ -12,11 +12,7 @@ class YelpCell: UITableViewCell {
 
     @IBOutlet weak var yelpTitle: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
-    @IBOutlet weak var yelpMainImage: UIImageView! {
-        didSet {
-            self.yelpMainImage.layer.cornerRadius = 8.0
-        }
-    }
+    @IBOutlet weak var yelpMainImage: UIImageView! 
     @IBOutlet weak var starsImage: UIImageView!
     @IBOutlet weak var reviewsLabel: UILabel!
     @IBOutlet weak var addressLabel: UILabel!
@@ -34,6 +30,7 @@ class YelpCell: UITableViewCell {
         }
         
         if business.imageURL != nil {
+            self.yelpMainImage.layer.cornerRadius = 4.0
             self.yelpMainImage.loadImage(url: business.imageURL!)
         }
         
