@@ -19,6 +19,8 @@ class YelpCell: UITableViewCell {
     @IBOutlet weak var yelpTypeLabel: UILabel!
     @IBOutlet weak var priceLabel: UILabel!
     
+    
+    
     func updateWithBusiness(business: Business) {
         
         if business.name != nil {
@@ -40,6 +42,14 @@ class YelpCell: UITableViewCell {
         
         if business.price != nil {
             self.priceLabel.text = business.price
+        }
+        
+        if business.address != nil {
+            self.addressLabel.text = business.address
+        }
+        
+        if business.categories != nil {
+            self.yelpTypeLabel.text = business.categories
         }
     }
     
