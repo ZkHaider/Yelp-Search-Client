@@ -8,20 +8,12 @@
 
 import UIKit
 
-class FiltersTableViewController: UITableViewController {
+class FiltersTableViewController: UITableViewController, YelpCellDelegate {
 
     @IBOutlet var filtersTableView: UITableView!
-    @IBOutlet weak var dealsSwitch: UISwitch!
-    @IBOutlet weak var sortByChevron: UILabel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        // Check if deals is turned on 
-        let dealsOn = UserDefaultsWrapper.getBool(key: "deals", defaultValue: false)
-        dealsSwitch.setOn(dealsOn, animated: true)
-        
-        sortByChevron.text = "\u{02C5}"
         
         self.navigationItem.titleView?.tintColor = UIColor.white
         self.navigationItem.title = "Filters"
@@ -44,6 +36,21 @@ class FiltersTableViewController: UITableViewController {
         // #warning Incomplete implementation, return the number of sections
         return 4
     }
+    
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        switch section {
+        case 0:
+            return "Deals"
+        case 1:
+            return "Sort By"
+        case 2:
+            return "Distance"
+        case 3:
+            return "Categories"
+        default:
+            return ""
+        }
+    }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
@@ -55,31 +62,54 @@ class FiltersTableViewController: UITableViewController {
         case 2:
             return 1
         case 3:
-            return 3
+            return 1
         default:
             return 0
         }
     }
     
-    @IBAction func dealSwitchPressed(_ sender: UISwitch) {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let activated = sender.isOn
-        if activated {
-            UserDefaultsWrapper.setBool(key: "deals", value: true)
-        } else {
-            UserDefaultsWrapper.setBool(key: "deals", value: false)
+        switch indexPath.section {
+        case 0:
+            return tableView.dequeueReusableCell(withIdentifier: "dealCell", for: indexPath) as! DealCell
+        case 1:
+            let sortCell = tableView.dequeueReusableCell(withIdentifier: "sortCell", for: indexPath) as! SortCell
+            sortCell.setDelegate(delegate: self)
+            return sortCell
+        case 2:
+            let distanceCell = tableView.dequeueReusableCell(withIdentifier: "distanceCell", for: indexPath) as! DistanceCell
+            distanceCell.setDelegate(delegate: self)
+            return distanceCell
+        case 3:
+            let categoryCell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath) as! CategoryCell
+            categoryCell.setDelegate(delegate: self)
+            return categoryCell
+        default:
+            return UITableViewCell()
+        }
+     }
+    
+    
+    func expandType(cellType: YelpCellType) {
+        
+        switch cellType {
+        case .Sort:
+            
+            // Code for expanding sort cell
+            
+            
+            break
+        case .Category:
+            
+            // Code for expanding category cell
+            break
+        case .Distance:
+            
+            // Code for expanding distance cell
+            break
         }
     }
-    
-    /*
-     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-     let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-     
-     // Configure the cell...
-     
-     return cell
-     }
-     */
     
     /*
      // Override to support conditional editing of the table view.
