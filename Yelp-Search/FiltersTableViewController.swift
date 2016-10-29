@@ -8,21 +8,26 @@
 
 import UIKit
 
-class FiltersTableViewController: UITableViewController, YelpCellDelegate {
+class FiltersTableViewController: UITableViewController {
 
     @IBOutlet var filtersTableView: UITableView!
+    var delegate: FiltersViewDelegate?
+    var yelpFilters: YelpFilters?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.navigationItem.titleView?.tintColor = UIColor.white
-        self.navigationItem.title = "Filters"
+        DispatchQueue.main.async {
+            self.navigationItem.titleView?.tintColor = UIColor.white
+            self.navigationItem.title = "Filters"
+        }
         
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem()
+        let rightButton = UIBarButtonItem(title: "Search", style: .plain, target: self, action: #selector(searchButtonPressed))
+        rightButton.tintColor = UIColor.white
+        self.navigationItem.rightBarButtonItem = rightButton
+        
+        // Load in our filters
+        yelpFilters = YelpFilters(instance: YelpFilters.instance)
     }
 
     override func didReceiveMemoryWarning() {
@@ -33,127 +38,142 @@ class FiltersTableViewController: UITableViewController, YelpCellDelegate {
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 4
+        return self.yelpFilters!.filters.count
     }
     
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        switch section {
-        case 0:
-            return "Deals"
-        case 1:
-            return "Sort By"
-        case 2:
-            return "Distance"
-        case 3:
-            return "Categories"
-        default:
-            return ""
+        
+        let filter = self.yelpFilters!.filters[section]
+        let label = filter.label
+        
+        // Add the number of selected options for multiple-select filters with hidden options
+        if filter.type == .Multiple && filter.numItemsVisible! > 0 && filter.numItemsVisible! < filter.options.count && !filter.opened {
+            let selectedOptions = filter.selectedOptions
+            return "\(label) (\(selectedOptions.count) selected)"
         }
+        
+        return label
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        switch section {
-        case 0:
-            return 1
-        case 1:
-            return 1
-        case 2:
-            return 1
-        case 3:
-            return 1
-        default:
-            return 0
+        
+        let filter = self.yelpFilters!.filters[section] as Filter
+        if !filter.opened {
+            if filter.type == FilterType.Single {
+                return 1
+            } else if filter.numItemsVisible! > 0 && filter.numItemsVisible! < filter.options.count {
+                return filter.numItemsVisible! + 1
+            }
         }
+        return filter.options.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        switch indexPath.section {
-        case 0:
-            return tableView.dequeueReusableCell(withIdentifier: "dealCell", for: indexPath) as! DealCell
-        case 1:
-            let sortCell = tableView.dequeueReusableCell(withIdentifier: "sortCell", for: indexPath) as! SortCell
-            sortCell.setDelegate(delegate: self)
-            return sortCell
-        case 2:
-            let distanceCell = tableView.dequeueReusableCell(withIdentifier: "distanceCell", for: indexPath) as! DistanceCell
-            distanceCell.setDelegate(delegate: self)
-            return distanceCell
-        case 3:
-            let categoryCell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath) as! CategoryCell
-            categoryCell.setDelegate(delegate: self)
-            return categoryCell
-        default:
-            return UITableViewCell()
-        }
-     }
-    
-    
-    func expandType(cellType: YelpCellType) {
+        let cell = UITableViewCell(style: UITableViewCellStyle.default, reuseIdentifier: nil)
         
-        switch cellType {
-        case .Sort:
-            
-            // Code for expanding sort cell
-            
-            
-            break
-        case .Category:
-            
-            // Code for expanding category cell
-            break
-        case .Distance:
-            
-            // Code for expanding distance cell
-            break
+        let filter = self.yelpFilters!.filters[indexPath.section] as Filter
+        switch filter.type {
+        case .Single:
+            if filter.opened {
+                let option = filter.options[indexPath.row]
+                cell.textLabel?.text = option.label
+                if option.selected {
+                    cell.accessoryView = UIImageView(image: UIImage(named: "Check"))
+                } else {
+                    cell.accessoryView = UIImageView(image: UIImage(named: "Uncheck"))
+                }
+            } else {
+                cell.textLabel?.text = filter.options[filter.selectedIndex].label
+                cell.accessoryView = UIImageView(image: UIImage(named: "Dropdown"))
+            }
+        case .Multiple:
+            if filter.opened || indexPath.row < filter.numItemsVisible! {
+                let option = filter.options[indexPath.row]
+                cell.textLabel?.text = option.label
+                if option.selected {
+                    cell.accessoryView = UIImageView(image: UIImage(named: "Check"))
+                } else {
+                    cell.accessoryView = UIImageView(image: UIImage(named: "Uncheck"))
+                }
+            } else {
+                cell.textLabel?.text = "See All"
+                cell.textLabel?.textAlignment = NSTextAlignment.center
+                cell.textLabel?.textColor = .darkGray
+            }
+        default:
+            let option = filter.options[indexPath.row]
+            cell.textLabel?.text = option.label
+            cell.selectionStyle = UITableViewCellSelectionStyle.none
+            let switchView = UISwitch(frame: CGRect.zero)
+            switchView.isOn = option.selected
+            switchView.onTintColor = UIColor(red:0.74, green:0.15, blue:0.13, alpha:1.00)
+            switchView.addTarget(self, action: #selector(handleSwitchValueChanged(switchView:)), for: UIControlEvents.valueChanged)
+            cell.accessoryView = switchView
+        }
+        
+        return cell
+    }
+    
+    func handleSwitchValueChanged(switchView: UISwitch) -> Void {
+        let cell = switchView.superview as! UITableViewCell
+        if let indexPath = self.tableView.indexPath(for: cell) {
+            let filter = self.yelpFilters!.filters[indexPath.section] as Filter
+            let option = filter.options[indexPath.row]
+            option.selected = switchView.isOn
         }
     }
     
-    /*
-     // Override to support conditional editing of the table view.
-     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-     // Return false if you do not want the specified item to be editable.
-     return true
-     }
-     */
-    
-    /*
-     // Override to support editing the table view.
-     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-     if editingStyle == .delete {
-     // Delete the row from the data source
-     tableView.deleteRows(at: [indexPath], with: .fade)
-     } else if editingStyle == .insert {
-     // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-     }
-     }
-     */
-    
-    /*
-     // Override to support rearranging the table view.
-     override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-     
-     }
-     */
-    
-    /*
-     // Override to support conditional rearranging of the table view.
-     override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-     // Return false if you do not want the item to be re-orderable.
-     return true
-     }
-     */
-    
-    /*
-    // MARK: - Navigation
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let filter = self.yelpFilters!.filters[indexPath.section]
+        switch filter.type {
+        case .Single:
+            if filter.opened {
+                let previousIndex = filter.selectedIndex
+                if previousIndex != indexPath.row {
+                    filter.selectedIndex = indexPath.row
+                    let previousIndexPath = NSIndexPath(row: previousIndex, section: indexPath.section)
+                    self.tableView.reloadRows(at: [indexPath, previousIndexPath as IndexPath], with: .automatic)
+                }
+            }
+            
+            let opened = filter.opened;
+            filter.opened = !opened;
+            
+            if opened {
+                let time = DispatchTime.now()
+                DispatchQueue.main.asyncAfter(deadline: time, execute: { (_) in
+                    self.tableView.reloadSections(NSMutableIndexSet(index: indexPath.section) as IndexSet, with: .automatic)
+                })
+            } else {
+                self.tableView.reloadSections(NSMutableIndexSet(index: indexPath.section) as IndexSet, with: .automatic)
+            }
+        case .Multiple:
+            if !filter.opened && indexPath.row == filter.numItemsVisible {
+                filter.opened = true
+                self.tableView.reloadSections(NSMutableIndexSet(index: indexPath.section) as IndexSet, with: .automatic)
+            } else {
+                let option = filter.options[indexPath.row]
+                option.selected = !option.selected
+                self.tableView.reloadRows(at: [indexPath], with: .automatic)
+            }
+        default:
+            break
+        }
 
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
     }
-    */
+    
+    @objc private func searchButtonPressed() {
+        
+        YelpFilters.instance.copyStateFrom(instance: self.yelpFilters!)
+        
+        let filtersViewController = self.navigationController?.popViewController(animated: true) as! FiltersTableViewController
+        self.delegate?.filtersDone(controller: filtersViewController)
+    }
 
+}
+
+protocol FiltersViewDelegate {
+    func filtersDone(controller: FiltersTableViewController)
 }

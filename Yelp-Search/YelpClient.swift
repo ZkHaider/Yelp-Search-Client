@@ -46,6 +46,30 @@ class YelpClient: BDBOAuth1RequestOperationManager {
         return searchWithTerm(term, sort: nil, categories: nil, deals: nil, completion: completion)
     }
     
+    func searchWithTerm(_ term: String, parameters: Dictionary<String, String>, completion: @escaping ([Business]?, Error?) -> Void) -> AFHTTPRequestOperation {
+        
+        var parametersToPass: [String: AnyObject] = ["term": term as AnyObject, "ll": "37.785771,-122.406165" as AnyObject]
+        
+        for (key, value) in parameters {
+            parametersToPass[key] = value as AnyObject
+        }
+        
+        print(parametersToPass)
+        
+        return self.get("search", parameters: parametersToPass, success: { (operation: AFHTTPRequestOperation, response: Any) -> Void in
+            if let response = response as? [String: Any]{
+                let dictionaries = response["businesses"] as? [NSDictionary]
+                if dictionaries != nil {
+                    completion(Business.businesses(array: dictionaries!), nil)
+                }
+            }
+        },
+                        failure: { (operation: AFHTTPRequestOperation?, error: Error) -> Void in
+                            completion(nil, error)
+        })!
+
+    }
+    
     func searchWithTerm(_ term: String, sort: YelpSortMode?, categories: [String]?, deals: Bool?, completion: @escaping ([Business]?, Error?) -> Void) -> AFHTTPRequestOperation {
         // For additional parameters, see http://www.yelp.com/developers/documentation/v2/search_api
         

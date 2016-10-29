@@ -9,7 +9,7 @@
 import UIKit
 import KRProgressHUD
 
-class YelpViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
+class YelpViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate, FiltersViewDelegate {
     
     // MARK: - Views
     
@@ -20,6 +20,7 @@ class YelpViewController: UIViewController, UITableViewDelegate, UITableViewData
     var businesses: [Business]!
     lazy var searchBar: UISearchBar = UISearchBar(frame: CGRect(x: 0, y: 0, width: 200, height: 20))
     var searchActive: Bool = false
+    var currentSearchTerm: String = "Thai"
     
     // MARK: - LifeCycle Methods
 
@@ -50,7 +51,7 @@ class YelpViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         KRProgressHUD.show(message: "Loading businesses...")
         
-        Business.searchWithTerm(term: "Thai", completion: { (businesses: [Business]?, error: Error?) -> Void in
+        Business.searchWithTerm(term: currentSearchTerm, completion: { (businesses: [Business]?, error: Error?) -> Void in
             
             self.businesses = businesses
             self.yelpTableView.reloadData()
@@ -100,32 +101,21 @@ class YelpViewController: UIViewController, UITableViewDelegate, UITableViewData
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
         if searchText.isEmpty {
-//            filteredMovies = nowPlayingMovies
             self.searchActive = false
         } else {
             
             self.searchActive = true
-            
-//            filteredMovies = nowPlayingMovies.filter({(movie: Movie) -> Bool in
-//                
-//                // FIX
-//                if (movie.title?.contains(searchText))! {
-//                    return true
-//                } else {
-//                    return false
-//                }
-//            })
         }
-        
-//        self.nowPlayingTableView.reloadData()
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
         KRProgressHUD.show(message: "Loading businesses...")
+        
+        currentSearchTerm = searchBar.text!
     
         // TODO... search API
-        Business.searchWithTerm(term: searchBar.text!, completion: { (businesses: [Business]?, error: Error?) -> Void in
+        Business.searchWithTerm(term: currentSearchTerm, completion: { (businesses: [Business]?, error: Error?) -> Void in
             
             self.businesses = businesses
             self.yelpTableView.reloadData()
@@ -156,8 +146,28 @@ class YelpViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         // Instantiate the filters tableview 
         let filtersTableView = storyboard?.instantiateViewController(withIdentifier: "filtersTableViewController") as! FiltersTableViewController
-        
+        filtersTableView.delegate = self
         self.navigationController?.pushViewController(filtersTableView, animated: true)
+    }
+    
+    func filtersDone(controller: FiltersTableViewController) {
+        
+        let filters = controller.yelpFilters! as YelpFilters
+        
+        for (key, value) in filters.parameters {
+            print("key: " + key + " value: " + value)
+        }
+        
+        KRProgressHUD.show(message: "Filtering businesses...")
+        Business.searchWithTerm(term: currentSearchTerm, parameters: filters.parameters, completion: { (businesses: [Business]?, error: Error?) -> Void in
+            
+            self.businesses = businesses
+            self.yelpTableView.reloadData()
+            
+            KRProgressHUD.dismiss()
+        })
+
+        
     }
     
 }
