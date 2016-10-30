@@ -25,4 +25,4 @@ The following **optional** features are implemented:
 
 Walkthrough of implemented user stories:
 
-![Walkthrough](http://i.giphy.com/3o6Zt9ipJL7Gh1BgNq.gif)
+![](http://i.giphy.com/3o6Zt9ipJL7Gh1BgNq.gif)
